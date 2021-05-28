@@ -1,0 +1,10 @@
+FROM golang:1.16-buster as build
+
+WORKDIR /base
+ADD . /base/
+RUN go build -o /base/app ./cmd/worker
+
+FROM gcr.io/distroless/base-debian10:debug
+COPY --from=build /base/app /base/app
+
+ENTRYPOINT ["/base/app"]

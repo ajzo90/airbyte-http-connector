@@ -1,0 +1,27 @@
+POST /airbyte/source/spec
+{"type": "SPEC", "spec": {}}
+
+POST /airbyte/source/check
+{"config": {...}}
+
+{"type": "LOG", "log": {"level": "INFO", "message": "Checking access to file:///local/source/se_users.csv..."}}
+{"type": "LOG", "log": {"level": "INFO", "message": "Check succeeded"}}
+{"type": "CONNECTION_STATUS", "connectionStatus": {"status": "SUCCEEDED"}}
+
+
+
+POST /airbyte/source/discover
+{"config": {...}}
+
+{"type": "LOG", "log": {"level": "INFO", "message": "Discovering schema of test at file:///local/source/se_users.csv..."}}
+{"type": "CATALOG", "catalog": {"streams": [{"name": "test", "json_schema": {"$schema": "http://json-schema.org/draft-07/schema#", "type": "object", "properties": {"_id": {"type": "string"}, "gender": {"type": "string"}, "age": {"type": "number"}}}}]}}
+
+
+
+POST /airbyte/source/read
+{"config": {...}, "catalog": {...}, "state": {...}}
+
+{"type": "RECORD", "record": {"stream": "test", "data": {"_id": "15839779-3507-4f12-9b5c-a96800aa349c", "gender": "NaN", "age": "NaN"}, "emitted_at": 1621603735000}}
+{"type": "RECORD", "record": {"stream": "test", "data": {"_id": "158399dc-b3a2-485e-b916-a84a01269cbf", "gender": "Female", "age": 20.0}, "emitted_at": 1621603735000}}
+{"type": "RECORD", "record": {"stream": "test", "data": {"_id": "1583a1a7-8679-4c9a-89ae-a72000a3aa47", "gender": "Female", "age": 75.0}, "emitted_at": 1621603735000}}
+...
