@@ -19,7 +19,7 @@ docker run --rm -p 9092:9092 airbyte/server:dev
 Use UI,API or docker.
 ```
 docker build -t airbyte/setup:dev -f Dockerfile-setup .
-docker run --rm --network host airbyte/setup:dev # "works on my maching..." 
+docker run --rm --network host airbyte/setup:dev # "works on my machine..." 
 ```
 
 ```
