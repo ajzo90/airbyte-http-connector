@@ -155,8 +155,8 @@ func SourceSpec(w io.Writer) error {
 			Required:             []string{"url", "key"},
 			AdditionalProperties: false,
 			Properties: map[string]Property{
-				"url": {Description: "host", Type: "string"},
-				"key": {Description: "port", Type: "string"},
+				"url": {Description: "url", Type: "string", Examples: []string{"http://127.0.0.1:9999"}},
+				"key": {Description: "secret", Type: "string", Examples: []string{"secret"}},
 			},
 		},
 	}})

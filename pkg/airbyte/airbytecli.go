@@ -9,22 +9,35 @@ import (
 	"os"
 )
 
+var okResp = func() string {
+	var buf = bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode("OK"); err != nil {
+		panic(err)
+	}
+	return buf.String()
+}()
+
 func Source(w io.Writer) error {
 	switch os.Args[1] {
 	case "spec":
 		return SourceSpec(w)
 	case "check":
 		var cnf SourceConfig
+		var wr = bytes.NewBuffer(nil)
 		if err := readConfig(&cnf); err != nil {
 			return err
+		} else if err := req(join(cnf.Url, "source/check"), cnf.Key, cnf, wr); err != nil {
+			return connectionStatus(w, err)
+		} else if wr.String() != okResp {
+			return connectionStatus(w, fmt.Errorf("unexpected response from server '%s'", string(wr.Bytes())))
 		}
-		return req(join(cnf.Url, "source/check"), cnf, w)
+		return connectionStatus(w, nil)
 	case "discover":
 		var cnf SourceConfig
 		if err := readConfig(&cnf); err != nil {
 			return err
 		}
-		return req(join(cnf.Url, "source/discover"), cnf, w)
+		return req(join(cnf.Url, "source/discover"), cnf.Key, cnf, w)
 	case "read":
 		var cnf SourceConfig
 		var catalog ConfiguredAirbyteCatalog
@@ -36,7 +49,7 @@ func Source(w io.Writer) error {
 		} else if err := readState(&state); err != nil {
 			return err
 		}
-		return req(join(cnf.Url, "source/read"), ReadConfig{Config: cnf, State: state, Catalog: catalog}, w)
+		return req(join(cnf.Url, "source/read"), cnf.Key, ReadConfig{Config: cnf, State: state, Catalog: catalog}, w)
 	default:
 		return fmt.Errorf("invalid command")
 	}
@@ -48,10 +61,15 @@ func Destination(w io.Writer) error {
 		return DestinationSpec(w)
 	case "check":
 		var cnf DestinationConfig
+		var wr = bytes.NewBuffer(nil)
 		if err := readConfig(&cnf); err != nil {
 			return err
+		} else if err := req(join(cnf.Url, "destination/check"), cnf.Key, cnf, wr); err != nil {
+			return connectionStatus(w, err)
+		} else if wr.String() != okResp {
+			return connectionStatus(w, fmt.Errorf("unexpected response from server '%s'", string(wr.Bytes())))
 		}
-		return req(join(cnf.Url, "destination/check"), cnf, w)
+		return connectionStatus(w, nil)
 	case "write":
 		var cnf DestinationConfig
 		var catalog ConfiguredAirbyteCatalog
@@ -60,13 +78,21 @@ func Destination(w io.Writer) error {
 		} else if err := readCatalog(&catalog); err != nil {
 			return err
 		}
-		return ClientSend(join(cnf.Url, "destination/write"), WriteConfig{Config: cnf, Catalog: catalog}, os.Stdin)
+		return ClientSend(join(cnf.Url, "destination/write"), cnf.Key, WriteConfig{Config: cnf, Catalog: catalog}, os.Stdin)
 	}
 
 	return nil
 }
 
-func req(path string, body interface{}, w io.Writer) error {
+func connectionStatus(w io.Writer, err error) error {
+	var ret = ConnectionStatusWrap{Type: "CONNECTION_STATUS", ConnectionStatus: ConnectionStatus{Status: "SUCCEEDED"}}
+	if err != nil {
+		ret = ConnectionStatusWrap{Type: "CONNECTION_STATUS", ConnectionStatus: ConnectionStatus{Status: "FAILED", Message: err.Error()}}
+	}
+	return json.NewEncoder(w).Encode(ret)
+}
+
+func req(path string, key string, body interface{}, w io.Writer) error {
 	var r io.Reader
 	if body != nil {
 		var buf = bytes.NewBuffer(nil)
@@ -75,12 +101,17 @@ func req(path string, body interface{}, w io.Writer) error {
 		}
 		r = buf
 	}
-	return reqReader(path, r, w)
+	return reqReader(path, key, r, w)
 }
 
-func reqReader(path string, r io.Reader, w io.Writer) error {
+func reqReader(path string, key string, r io.Reader, w io.Writer) error {
 
-	resp, err := http.Post(path, "", r)
+	req, err := http.NewRequest(http.MethodPost, path, r)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", key)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}

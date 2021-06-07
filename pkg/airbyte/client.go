@@ -9,10 +9,10 @@ import (
 )
 
 // curl -F 'file_field=@../../../platform-data/rusta/se_trans2.csv' http://127.0.0.1:8082
-func ClientSend(url string, cnf interface{}, in io.Reader) error {
+func ClientSend(url string, key string, cnf interface{}, in io.Reader) error {
 	r, w := io.Pipe()
 	m := multipart.NewWriter(w)
-	
+
 	go func() {
 
 		err := func() error {
@@ -36,7 +36,14 @@ func ClientSend(url string, cnf interface{}, in io.Reader) error {
 		w.CloseWithError(err)
 	}()
 
-	res, err := http.Post(url, m.FormDataContentType(), r)
+	req, err := http.NewRequest(http.MethodPost, url, r)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", key)
+	req.Header.Set("Content-Type", m.FormDataContentType())
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	} else if res.StatusCode != 200 {

@@ -1,0 +1,5 @@
+connector_image: ajzo90/airbyte-source-go-example:dev
+tests:
+  connection:
+    - config_path: "source-test-stubs/config-ok.json"
+      status: "succeed"
