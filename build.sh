@@ -1,8 +1,14 @@
-echo "building source..."
-docker build -t ajzo90/airbyte-source-go-example:0.1.0 -f Dockerfile-source .
+SRC=ajzo90/airbyte-source-go-example:0.1.1
+DEST=ajzo90/airbyte-destination-go-example:0.1.1
 
-echo "building destination..."
-docker build -t ajzo90/airbyte-destination-go-example:0.1.0 -f Dockerfile-destination .
+echo "building source...$SRC"
+docker build -t $SRC -f Dockerfile-source .
+echo "push source...$SRC"
+
+echo "building destination $DEST..."
+docker build -t $DEST -f Dockerfile-destination .
+echo "push destination...$DEST"
+docker push $DEST
 
 echo "building example server..."
 docker build -t ajzo90/server:dev -f Dockerfile-server .

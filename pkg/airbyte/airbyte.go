@@ -71,12 +71,6 @@ type ConnectionSpecification struct {
 	Properties           map[string]Property `json:"properties"`
 }
 
-type Property struct {
-	Description string   `json:"description,omitempty"`
-	Type        string   `json:"type"`
-	Examples    []string `json:"examples,omitempty"`
-}
-
 type AirbyteLogMessage struct {
 	Level   string `json:"level"`
 	Message string `json:"message"`
@@ -85,4 +79,17 @@ type AirbyteLogMessage struct {
 type AirbyteLogMessageWrap struct {
 	Type string            `json:"type"`
 	Log  AirbyteLogMessage `json:"log"`
+}
+
+type ArrProperty struct {
+	Type       interface{}         `json:"type"` // string or []string
+	Properties map[string]Property `json:"properties"`
+}
+
+type Property struct {
+	Description string              `json:"description,omitempty"`
+	Type        interface{}         `json:"type"` // string or []string
+	Examples    []string            `json:"examples,omitempty"`
+	Properties  map[string]Property `json:"properties"`
+	Items       ArrProperty         `json:"items"`
 }
