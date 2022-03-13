@@ -1,4 +1,4 @@
-module test
+module github.com/ajzo90/airbyte-http-connector
 
 go 1.16
 
